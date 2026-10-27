@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오프닝 및 미니게임 모음 (Opening & Mini-Games)</title>
+    <!-- 픽셀 느낌의 글꼴 (NeoDunggeunmo) 로드 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/NeoDunggeunmo.woff">
+    <style>
+        @font-face {
+            font-family: 'NeoDunggeunmo';
+            src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/NeoDunggeunmo.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'NeoDunggeunmo', monospace, sans-serif;
+            user-select: none;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: grayscale;
+            font-smooth: never;
+        }
+
+        /* 공통 페이지 스타일 */
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* --- 0-1번 & 0-2번 오프닝 독백 페이지 --- */
+        .page-monologue {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .page-monologue.active {
+            display: flex;
+        }
+
+        .monologue-container {
+            color: #ffffff;
+            font-size: 1.5rem;
+            line-height: 1.8;
+            text-align: left;
+            letter-spacing: 1px;
+            padding: 20px;
+            word-break: keep-all;
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .line-break {
+            display: block;
+            margin-bottom: 1.4em;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background-color: #fff;
+            vertical-align: middle;
+            margin-left: 4px;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .skip-hint {
+            position: absolute;
+            bottom: 40px;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.85rem;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.7; }
+        }
+
+        /* --- 메뉴 선택 페이지 (bback.png) --- */
+        #pageMenu {
+            background-image: url('bback.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .menu-icon-container {
+            position: absolute;
+            top: 52%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 65%;
+            max-width: 800px;
+            z-index: 10;
+        }
+
+        .menu-icon {
+            cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease;
+            max-height: 280px;
+            object-fit: contain;
+        }
+
+        .menu-icon:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+
+        .menu-icon:active {
+            transform: scale(0.95);
+        }
+
+        /* --- 하단 표준 버튼 스타일 --- */
+        .btn {
+            position: absolute;
+            cursor: pointer;
+            user-select: none;
+            z-index: 10;
+            transition: transform 0.1s ease;
+            width: 220px;
+            max-width: 40vw;
+            bottom: 22%;
+            left: 50%;
+            transform: translateX(calc(-50% + 220px));
+        }
+
+        .btn:active {
+            transform: translateX(calc(-50% + 220px)) scale(0.95);
+        }
+
+        /* ==========================================
+           1. 개미 게임 스타일
+           ========================================== */
+        #ant-page1 { background-image: url('img1.png'); }
+        #ant-page2 { background-image: url('img2.png'); }
+        #ant-page3 { background-image: url('pop6.png'); }
+        #ant-page-en1 { background-image: url('en.png'); cursor: pointer; }
+        #ant-page-en2 { background-image: url('en2.png'); cursor: pointer; }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .popup-card {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        #pop2-modal .popup-card { background-image: url('pop2.png'); }
+        #pop3-modal .popup-card { background-image: url('pop3.png'); }
+
+        .popup-btn {
+            position: absolute;
+            bottom: 22%;
+            left: 50%;
+            transform: translateX(calc(-50% + 220px));
+            width: 220px;
+            max-width: 40vw;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .popup-btn:active {
+            transform: translateX(calc(-50% + 220px)) scale(0.95);
+        }
+
+        #drawCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            cursor: crosshair;
+        }
+
+        .ant {
+            position: absolute;
+            width: 144px;
+            height: 144px;
+            z-index: 5;
+            cursor: pointer;
+            user-select: none;
+            transform-origin: center center;
+            pointer-events: auto;
+        }
+
+        .ant.dismissed {
+            transition: transform 0.8s ease-in, opacity 0.8s ease-in;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ==========================================
+           2. 메이커스 마크 게임 스타일
+           ========================================== */
+        #makers-page1 { background-image: url('im1.png'); }
+        #makers-page2 { background-image: url('im6.png'); }
+        #makers-page3 { background-image: url('im3.png'); }
+        #makers-page4 { background-image: url('im4.png'); }
+        #makers-page5 { background-image: url('im2.png'); }
+        #makers-page6 { background-image: url('im5.png'); }
+
+        /* 거꾸로 뒤집힌 메이커스마크 병 */
+        #makers-page2 .bottle {
+            position: absolute;
+            top: 5%;
+            left: 50%;
+            transform: translateX(-50%) rotate(180deg);
+            width: 90vw;
+            max-width: 700px;
+            z-index: 5;
+            transition: top 0.4s ease-in-out;
+        }
+
+        /* 병이 왁스에 잠기는 위치 */
+        #makers-page2 .bottle.dipping {
+            top: 25%;
+        }
+
+        /* 우측 상단 빨간 버튼 (but2.png) */
+        #makers-page2 .btn-press {
+            position: absolute;
+            top: 12%;
+            right: 15%;
+            width: 100px;
+            max-width: 15vw;
+            cursor: pointer;
+            user-select: none;
+            z-index: 10;
+            transition: transform 0.1s ease;
+        }
+
+        #makers-page2 .btn-press:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 0-1번 독백 페이지 (sta.png 구도) -->
+    <div id="page0_1" class="page-monologue active">
+        <div class="monologue-container">
+            <div><span id="monologueText1"></span><span class="typing-cursor" id="cursor1"></span></div>
+        </div>
+        <div class="skip-hint">화면을 클릭하면 진행됩니다</div>
+    </div>
+
+    <!-- 0-2번 독백 페이지 (sta2.png 구도) -->
+    <div id="page0_2" class="page-monologue">
+        <div class="monologue-container">
+            <div><span id="monologueText2"></span><span class="typing-cursor" id="cursor2"></span></div>
+        </div>
+        <div class="skip-hint">화면을 클릭하면 진행됩니다</div>
+    </div>
+
+    <!-- 메뉴 선택 페이지 (bback.png) -->
+    <div id="pageMenu" class="page">
+        <div class="menu-icon-container">
+            <!-- 1번째 아이콘: 메이커스 마크 게임 -->
+            <img src="maker3.png" alt="Maker's Mark Game" class="menu-icon" id="btn-makers-game">
+            <!-- 2번째 아이콘: 개미 게임 (약간 왼쪽으로 조정된 위치) -->
+            <img src="an.png" alt="Ant Game" class="menu-icon" id="btn-ant-game" style="transform: translateX(-20px);">
+        </div>
+    </div>
+
+    <!-- ==========================================
+         개미 게임 페이지들
+         ========================================== -->
+    <div id="ant-page1" class="page">
+        <img src="but1.png" alt="Start Button" class="btn" id="btn-ant-start">
+    </div>
+
+    <div id="ant-page2" class="page">
+        <canvas id="drawCanvas"></canvas>
+        <div id="antContainer"></div>
+    </div>
+
+    <div id="pop2-modal" class="modal-overlay">
+        <div class="popup-card">
+            <img src="but4.png" alt="Next Button" class="popup-btn" id="btn-pop2-next">
+        </div>
+    </div>
+
+    <div id="pop3-modal" class="modal-overlay">
+        <div class="popup-card">
+            <img src="but4.png" alt="Final Button" class="popup-btn" id="btn-pop3-next">
+        </div>
+    </div>
+
+    <div id="ant-page3" class="page">
+        <img src="but4.png" alt="Last Page Button" class="btn" id="btn-ant-final-page" style="left: 72%; bottom: 14%;">
+    </div>
+
+    <!-- 신규 추가: en.png & en2.png 페이지 -->
+    <div id="ant-page-en1" class="page">
+        <div class="skip-hint" style="bottom: 20px;">화면을 클릭하면 진행됩니다</div>
+    </div>
+
+    <div id="ant-page-en2" class="page">
+        <div class="skip-hint" style="bottom: 20px;">화면을 클릭하면 메인 메뉴로 돌아갑니다</div>
+    </div>
+
+    <!-- ==========================================
+         메이커스 마크 게임 페이지들
+         ========================================== -->
+    <div id="makers-page1" class="page">
+        <img src="but1.png" alt="Start Button" class="btn" id="btn-makers-start">
+    </div>
+
+    <div id="makers-page2" class="page">
+        <img src="maker2.png" alt="Maker's Mark Bottle" id="bottle" class="bottle">
+        <img src="but2.png" alt="Press Button" class="btn-press" id="btn-makers-press">
+    </div>
+
+    <div id="makers-page3" class="page">
+        <img src="but3.png" alt="Confirm Button" class="btn" id="btn-makers-page3">
+    </div>
+
+    <div id="makers-page4" class="page">
+        <img src="but3.png" alt="Confirm Button" class="btn" id="btn-makers-page4">
+    </div>
+
+    <div id="makers-page5" class="page">
+        <img src="but4.png" alt="Next Button" class="btn" id="btn-makers-page5">
+    </div>
+
+    <div id="makers-page6" class="page">
+        <img src="but5.png" alt="Next Button" class="btn" id="btn-makers-page6">
+    </div>
+
+    <script>
+        // 독백 데이터
+        const page1Data = [
+            { text: "오늘 실수로 친구의 물건을 망가뜨렸어.", hasSpaceAfter: false },
+            { text: "조금 더 조심할걸..", hasSpaceAfter: true },
+            { text: "자꾸 실수하는 내 스스로에게 실망하게 돼", hasSpaceAfter: true },
+            { text: "실수는 다 나쁜걸까?", hasSpaceAfter: false }
+        ];
+
+        const page2Data = [
+            { text: "아니.", hasSpaceAfter: true },
+            { text: "세상엔", hasSpaceAfter: false },
+            { text: "완전하지 않기에 더 매력적인 것들이 있대.", hasSpaceAfter: false }
+        ];
+
+        let lineIndex = 0;
+        let charIndex = 0;
+        let monologueTimer = null;
+        let isPage1Finished = false;
+        let isPage2Finished = false;
+
+        const textElem1 = document.getElementById('monologueText1');
+        const textElem2 = document.getElementById('monologueText2');
+
+        // 공통 페이지 전환 함수
+        function showPage(pageId) {
+            document.querySelectorAll('.page, .page-monologue').forEach(page => {
+                page.classList.remove('active');
+            });
+            const target = document.getElementById(pageId);
+            if (target) {
+                target.classList.add('active');
+            }
+
+            if (pageId === 'ant-page2') {
+                initAntGamePage();
+            }
+        }
+
+        // 타자기 효과 엔진
+        function typeWriter(dataArray, textElem, cursorElem, onComplete) {
+            if (lineIndex < dataArray.length) {
+                const currentObj = dataArray[lineIndex];
+                const currentText = currentObj.text;
+
+                if (charIndex < currentText.length) {
+                    textElem.innerHTML += currentText.charAt(charIndex);
+                    charIndex++;
+                    monologueTimer = setTimeout(() => typeWriter(dataArray, textElem, cursorElem, onComplete), 80);
+                } else {
+                    if (currentObj.hasSpaceAfter) {
+                        textElem.innerHTML += "<span class='line-break'></span>";
+                    } else {
+                        textElem.innerHTML += "<br>";
+                    }
+                    lineIndex++;
+                    charIndex = 0;
+                    monologueTimer = setTimeout(() => typeWriter(dataArray, textElem, cursorElem, onComplete), 450);
+                }
+            } else {
+                if (cursorElem) cursorElem.style.display = 'none';
+                if (onComplete) onComplete();
+            }
+        }
+
+        function renderFullPage1() {
+            let html = "";
+            page1Data.forEach(item => {
+                html += item.text;
+                if (item.hasSpaceAfter) {
+                    html += "<span class='line-break'></span>";
+                } else {
+                    html += "<br>";
+                }
+            });
+            textElem1.innerHTML = html;
+            document.getElementById('cursor1').style.display = 'none';
+            isPage1Finished = true;
+        }
+
+        function renderFullPage2() {
+            let html = "";
+            page2Data.forEach(item => {
+                html += item.text;
+                if (item.hasSpaceAfter) {
+                    html += "<span class='line-break'></span>";
+                } else {
+                    html += "<br>";
+                }
+            });
+            textElem2.innerHTML = html;
+            document.getElementById('cursor2').style.display = 'none';
+            isPage2Finished = true;
+        }
+
+        function startPage1() {
+            lineIndex = 0;
+            charIndex = 0;
+            typeWriter(page1Data, textElem1, document.getElementById('cursor1'), () => {
+                isPage1Finished = true;
+            });
+        }
+
+        function goToPage2() {
+            if (monologueTimer) clearTimeout(monologueTimer);
+            document.getElementById('page0_1').classList.remove('active');
+            document.getElementById('page0_2').classList.add('active');
+
+            lineIndex = 0;
+            charIndex = 0;
+            typeWriter(page2Data, textElem2, document.getElementById('cursor2'), () => {
+                isPage2Finished = true;
+            });
+        }
+
+        // 독백 페이지 이벤트
+        document.getElementById('page0_1').addEventListener('click', () => {
+            if (!isPage1Finished) {
+                if (monologueTimer) clearTimeout(monologueTimer);
+                renderFullPage1();
+            } else {
+                goToPage2();
+            }
+        });
+
+        document.getElementById('page0_2').addEventListener('click', () => {
+            if (!isPage2Finished) {
+                if (monologueTimer) clearTimeout(monologueTimer);
+                renderFullPage2();
+            } else {
+                showPage('pageMenu');
+            }
+        });
+
+        // ==========================================
+        // 메인 메뉴 버튼 이벤트 (게임 연결)
+        // ==========================================
+        document.getElementById('btn-makers-game').addEventListener('click', () => {
+            showPage('makers-page1');
+        });
+
+        document.getElementById('btn-ant-game').addEventListener('click', () => {
+            showPage('ant-page1');
+        });
+
+        // ==========================================
+        // 1. 개미 게임 로직
+        // ==========================================
+        let canvas, ctx;
+        let isDrawing = false;
+        let pathPoints = [];
+        let ants = [];
+        let antSpawnInterval = null;
+        let gameTimer = null;
+        let popupTriggered = false;
+        const antImgSrc = 'ant.png';
+        const ANT_SIZE = 144;
+        const HALF_ANT_SIZE = ANT_SIZE / 2;
+
+        document.getElementById('btn-ant-start').addEventListener('click', () => {
+            showPage('ant-page2');
+        });
+
+        function initAntGamePage() {
+            canvas = document.getElementById('drawCanvas');
+            ctx = canvas.getContext('2d');
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+
+            canvas.addEventListener('touchstart', startDrawingTouch);
+            canvas.addEventListener('touchmove', drawTouch);
+            canvas.addEventListener('touchend', stopDrawing);
+
+            if (antSpawnInterval) clearInterval(antSpawnInterval);
+            antSpawnInterval = setInterval(spawnAnt, 1200);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function getPos(e) {
+            return { x: e.clientX, y: e.clientY };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            pathPoints.push(pos);
+            checkStartTimer();
+        }
+
+        function startDrawingTouch(e) {
+            if (e.touches.length > 0) {
+                isDrawing = true;
+                const pos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+                pathPoints.push(pos);
+                checkStartTimer();
+            }
+        }
+
+        function checkStartTimer() {
+            if (!popupTriggered && !gameTimer) {
+                gameTimer = setTimeout(() => {
+                    document.getElementById('pop2-modal').classList.add('active');
+                }, 25000);
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            drawSegment(pos);
+        }
+
+        function drawTouch(e) {
+            if (!isDrawing || e.touches.length === 0) return;
+            const pos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            drawSegment(pos);
+        }
+
+        function drawSegment(pos) {
+            ctx.lineWidth = 20;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#B5753D';
+
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+
+            pathPoints.push(pos);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        document.getElementById('btn-pop2-next').addEventListener('click', () => {
+            document.getElementById('pop2-modal').classList.remove('active');
+            document.getElementById('pop3-modal').classList.add('active');
+        });
+
+        document.getElementById('btn-pop3-next').addEventListener('click', () => {
+            document.getElementById('pop3-modal').classList.remove('active');
+            showPage('ant-page3');
+        });
+
+        // 마지막 pop6 페이지 버튼 클릭 시 en.png 페이지로 이동
+        document.getElementById('btn-ant-final-page').addEventListener('click', () => {
+            showPage('ant-page-en1');
+        });
+
+        // en.png 클릭 시 en2.png 로 이동
+        document.getElementById('ant-page-en1').addEventListener('click', () => {
+            showPage('ant-page-en2');
+        });
+
+        // en2.png 클릭 시 메인 메뉴 선택 화면으로 이동
+        document.getElementById('ant-page-en2').addEventListener('click', () => {
+            showPage('pageMenu');
+        });
+
+        function spawnAnt() {
+            if (pathPoints.length < 10) return;
+
+            const antElem = document.createElement('img');
+            antElem.src = antImgSrc;
+            antElem.className = 'ant';
+            document.getElementById('antContainer').appendChild(antElem);
+
+            const isStray = Math.random() < 0.25; 
+
+            const newAnt = {
+                element: antElem,
+                pathIndex: 0,
+                x: pathPoints[0].x,
+                y: pathPoints[0].y,
+                angle: 0,
+                isStray: isStray,
+                hasDeviated: false,
+                strayVx: 0,
+                strayVy: 0,
+                isDismissed: false,
+                isLooping: false,
+                loopCenter: { x: 0, y: 0 },
+                loopAngle: 0,
+                loopRadius: 40 + Math.random() * 30,
+                loopSpeed: 0.04 + Math.random() * 0.03
+            };
+
+            antElem.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dismissAnt(newAnt);
+            });
+
+            ants.push(newAnt);
+        }
+
+        function dismissAnt(ant) {
+            if (ant.isDismissed) return;
+            ant.isDismissed = true;
+
+            const escapeAngle = ant.angle + Math.PI + (Math.random() - 0.5);
+            const distance = Math.max(window.innerWidth, window.innerHeight);
+
+            const targetX = ant.x + Math.cos(escapeAngle) * distance;
+            const targetY = ant.y + Math.sin(escapeAngle) * distance;
+
+            ant.element.classList.add('dismissed');
+            ant.element.style.transform = `translate(${targetX}px, ${targetY}px) rotate(${escapeAngle * 180 / Math.PI}deg) scale(0.2)`;
+
+            setTimeout(() => {
+                if (ant.element.parentNode) {
+                    ant.element.parentNode.removeChild(ant.element);
+                }
+                ants = ants.filter(a => a !== ant);
+            }, 800);
+        }
+
+        function gameLoop() {
+            for (let i = ants.length - 1; i >= 0; i--) {
+                const ant = ants[i];
+                if (ant.isDismissed) continue;
+
+                if (ant.hasDeviated) {
+                    ant.x += ant.strayVx;
+                    ant.y += ant.strayVy;
+                    ant.element.style.left = `${ant.x - HALF_ANT_SIZE}px`;
+                    ant.element.style.top = `${ant.y - HALF_ANT_SIZE}px`;
+                    ant.element.style.transform = `rotate(${ant.angle * 180 / Math.PI}deg)`;
+                    continue;
+                }
+
+                if (ant.isLooping) {
+                    ant.loopAngle += ant.loopSpeed;
+                    ant.x = ant.loopCenter.x + Math.cos(ant.loopAngle) * ant.loopRadius;
+                    ant.y = ant.loopCenter.y + Math.sin(ant.loopAngle) * ant.loopRadius;
+                    ant.angle = ant.loopAngle + Math.PI / 2;
+
+                    ant.element.style.left = `${ant.x - HALF_ANT_SIZE}px`;
+                    ant.element.style.top = `${ant.y - HALF_ANT_SIZE}px`;
+                    ant.element.style.transform = `rotate(${ant.angle * 180 / Math.PI}deg)`;
+                    continue;
+                }
+
+                if (ant.pathIndex < pathPoints.length - 1) {
+                    const speed = 2.5;
+                    const targetPoint = pathPoints[ant.pathIndex + 1];
+
+                    const dx = targetPoint.x - ant.x;
+                    const dy = targetPoint.y - ant.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < speed) {
+                        ant.pathIndex++;
+                    } else {
+                        ant.angle = Math.atan2(dy, dx);
+                        ant.x += (dx / dist) * speed;
+                        ant.y += (dy / dist) * speed;
+                    }
+
+                    if (ant.isStray && ant.pathIndex > pathPoints.length * 0.4 && Math.random() < 0.05) {
+                        ant.hasDeviated = true;
+                        const deviateAngle = ant.angle + (Math.random() > 0.5 ? 1 : -1) * (Math.PI / 3 + Math.random() * Math.PI / 4);
+                        ant.angle = deviateAngle;
+                        ant.strayVx = Math.cos(deviateAngle) * 2;
+                        ant.strayVy = Math.sin(deviateAngle) * 2;
+                    }
+
+                    ant.element.style.left = `${ant.x - HALF_ANT_SIZE}px`;
+                    ant.element.style.top = `${ant.y - HALF_ANT_SIZE}px`;
+                    ant.element.style.transform = `rotate(${ant.angle * 180 / Math.PI}deg)`;
+                } else {
+                    ant.isLooping = true;
+                    const lastPoint = pathPoints[pathPoints.length - 1];
+                    ant.loopCenter = { x: lastPoint.x, y: lastPoint.y };
+                    ant.loopAngle = ant.angle;
+                }
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ==========================================
+        // 2. 메이커스 마크 게임 로직
+        // ==========================================
+        let makersGameStep = 1; 
+        let isMakersAnimating = false;
+
+        document.getElementById('btn-makers-start').addEventListener('click', () => {
+            makersGameStep = 1;
+            showPage('makers-page2');
+        });
+
+        document.getElementById('btn-makers-page3').addEventListener('click', () => {
+            makersGameStep = 2;
+            showPage('makers-page2');
+        });
+
+        document.getElementById('btn-makers-page4').addEventListener('click', () => {
+            makersGameStep = 3;
+            showPage('makers-page2');
+        });
+
+        document.getElementById('btn-makers-page5').addEventListener('click', () => {
+            showPage('makers-page6');
+        });
+
+        document.getElementById('btn-makers-page6').addEventListener('click', () => {
+            console.log("메이커스 마크 게임 완료 버튼 클릭됨 -> 메뉴 페이지로 이동");
+            showPage('pageMenu');
+        });
+
+        document.getElementById('btn-makers-press').addEventListener('click', () => {
+            if (isMakersAnimating) return;
+            isMakersAnimating = true;
+
+            const bottle = document.getElementById('bottle');
+            bottle.classList.add('dipping');
+
+            setTimeout(() => {
+                bottle.classList.remove('dipping');
+            }, 400);
+
+            setTimeout(() => {
+                isMakersAnimating = false;
+
+                if (makersGameStep === 1) {
+                    showPage('makers-page3');
+                } else if (makersGameStep === 2) {
+                    showPage('makers-page4');
+                } else if (makersGameStep === 3) {
+                    showPage('makers-page5');
+                }
+            }, 800);
+        });
+
+        window.addEventListener('resize', () => {
+            if (canvas) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(canvas, 0, 0);
+
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                ctx.drawImage(tempCanvas, 0, 0);
+            }
+        });
+
+        window.addEventListener('load', () => {
+            startPage1();
+        });
+    </script>
+</body>
+</html>
